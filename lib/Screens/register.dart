@@ -17,6 +17,8 @@ class _RegisterPageState extends State<RegisterPage> {
   late final TextEditingController _mobileNo;
   late final TextEditingController _role;
 
+  List<String> role = ["Manager", "Player"];
+
   @override
   void initState() {
     _email = TextEditingController();
@@ -117,6 +119,38 @@ class _RegisterPageState extends State<RegisterPage> {
                   keyboardType: TextInputType.phone,
                   enableSuggestions: false,
                   autocorrect: false,
+                ),
+                const SizedBox(height: 20.0),
+                SizedBox(
+                  width: double.infinity,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(color: Colors.black, spreadRadius: 0.5)
+                        ],
+                        borderRadius: BorderRadius.all(Radius.circular(10))),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(6, 1, 1, 1),
+                      child: DropdownButton<String>(
+                        value: _role.text == "" ? "Manager" : _role.text,
+                        icon: const Icon(Icons.keyboard_arrow_down),
+                        items: role.map((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          print(_role.text);
+                          setState(() {
+                            _role.text = newValue!;
+                          });
+                          print(_role.text);
+                        },
+                      ),
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20.0),
                 SizedBox(

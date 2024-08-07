@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'screens/sports_complex_list.dart'; // Import the SportsComplexList widget
-import 'screens/profile_page.dart'; // Import the ProfilePage widget
-import 'Screens/bookings_page.dart'; // Import the MyBookingsPage widget
-import 'screens/login.dart'; // Import the LoginPage widget
-import 'screens/register.dart';
-import 'models/sports_complex.dart'; // Import the RegisterPage widget
+import '../models/sports_complex.dart'; // Import the SportsComplex class
+import '../screens/sports_complex_list.dart';
+import '../Screens/profile_page.dart'; // Import the SportsComplexList widget
+import '../Screens/bookings_page.dart'; // Import the SportsComplexList widget
 
 void main() {
   runApp(MyApp());
@@ -20,12 +18,6 @@ class MyApp extends StatelessWidget {
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: HomePage(),
-      routes: {
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const RegisterPage(),
-        '/profile': (context) => ProfilePage(),
-        '/my-bookings': (context) => BookingsPage(),
-      },
     );
   }
 }
@@ -51,13 +43,18 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sports Booking App'),
+        title: Text('Sports Booking App'),
         actions: <Widget>[
           IconButton(
-            icon: const Icon(Icons.person),
+            icon: Icon(Icons.person),
             onPressed: () {
-              Navigator.pushNamed(
-                  context, '/profile'); // Navigate to profile page
+              // Navigate to profile page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ProfilePage(), // Replace with your profile page widget
+                ),
+              );
             },
           ),
         ],
@@ -66,42 +63,33 @@ class HomePage extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            const DrawerHeader(
-              child: Text('Menu',
-                  style: TextStyle(color: Colors.white, fontSize: 24)),
+            DrawerHeader(
+              child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 24)),
               decoration: BoxDecoration(
                 color: Colors.blue,
               ),
             ),
             ListTile(
-              title: const Text('Home'),
+              title: Text('Home'),
               onTap: () {
+                // Navigate to home page
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              title: const Text('My Bookings'),
+              title: Text('My Bookings'),
               onTap: () {
-                Navigator.pushNamed(
-                    context, '/my-bookings'); // Navigate to bookings page
+                // Navigate to bookings page
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BookingsPage(), // Replace with your bookings page widget
+                  ),
+                );
               },
             ),
             ListTile(
-              title: const Text('Login'),
-              onTap: () {
-                Navigator.pushNamed(
-                    context, '/login'); // Navigate to login page
-              },
-            ),
-            ListTile(
-              title: const Text('Register'),
-              onTap: () {
-                Navigator.pushNamed(
-                    context, '/register'); // Navigate to register page
-              },
-            ),
-            ListTile(
-              title: const Text('Logout'),
+              title: Text('Logout'),
               onTap: () {
                 // Handle logout
               },

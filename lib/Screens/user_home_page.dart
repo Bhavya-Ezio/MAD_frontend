@@ -5,10 +5,12 @@ import '../Screens/profile_page.dart'; // Import the SportsComplexList widget
 import '../Screens/bookings_page.dart'; // Import the SportsComplexList widget
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -39,20 +41,23 @@ class HomePage extends StatelessWidget {
     // Add more SportsComplex instances here
   ];
 
+  HomePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sports Booking App'),
+        title: const Text('Sports Booking App'),
         actions: <Widget>[
           IconButton(
-            icon: Icon(Icons.person),
+            icon: const Icon(Icons.person),
             onPressed: () {
               // Navigate to profile page
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ProfilePage(), // Replace with your profile page widget
+                  builder: (context) =>
+                      const ProfilePage(), // Replace with your profile page widget
                 ),
               );
             },
@@ -63,33 +68,35 @@ class HomePage extends StatelessWidget {
         child: ListView(
           padding: EdgeInsets.zero,
           children: <Widget>[
-            DrawerHeader(
-              child: Text('Menu', style: TextStyle(color: Colors.white, fontSize: 24)),
+            const DrawerHeader(
               decoration: BoxDecoration(
                 color: Colors.blue,
               ),
+              child: Text('Menu',
+                  style: TextStyle(color: Colors.white, fontSize: 24)),
             ),
             ListTile(
-              title: Text('Home'),
+              title: const Text('Home'),
               onTap: () {
                 // Navigate to home page
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              title: Text('My Bookings'),
+              title: const Text('My Bookings'),
               onTap: () {
                 // Navigate to bookings page
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => BookingsPage(), // Replace with your bookings page widget
+                    builder: (context) =>
+                        const BookingsPage(), // Replace with your bookings page widget
                   ),
                 );
               },
             ),
             ListTile(
-              title: Text('Logout'),
+              title: const Text('Logout'),
               onTap: () {
                 // Handle logout
               },

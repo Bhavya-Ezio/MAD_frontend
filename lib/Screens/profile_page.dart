@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,7 +19,7 @@ class ProfilePage extends StatelessWidget {
 }
 
 class ProfileContent extends StatelessWidget {
-  const ProfileContent({Key? key}) : super(key: key);
+  const ProfileContent({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -33,19 +35,23 @@ class ProfileContent extends StatelessWidget {
   }
 
   Widget _buildProfileHeader() {
-    return Center(
+    return const Center(
       child: Column(
         children: <Widget>[
-          const CircleAvatar(
+          CircleAvatar(
             radius: 60,
-            backgroundImage: NetworkImage('https://via.placeholder.com/150'), // Replace with user's profile picture URL
+            backgroundImage: NetworkImage(
+                'https://via.placeholder.com/150'), // Replace with user's profile picture URL
           ),
-          const SizedBox(height: 10),
-          const Text(
+          SizedBox(height: 10),
+          Text(
             'Om Desai',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blueAccent),
+            style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueAccent),
           ),
-          const Text(
+          Text(
             'Software Engineer',
             style: TextStyle(fontSize: 18, color: Colors.grey),
           ),
@@ -103,7 +109,7 @@ class ProfileContent extends StatelessWidget {
 }
 
 class UserInfo extends StatelessWidget {
-  const UserInfo({Key? key}) : super(key: key);
+  const UserInfo({super.key});
 
   @override
   Widget build(BuildContext context) {

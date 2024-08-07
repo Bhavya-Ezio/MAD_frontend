@@ -5,9 +5,10 @@ import 'enquiry_page.dart'; // Import the EnquiryPage widget
 class SportsComplexList extends StatefulWidget {
   final List<SportsComplex> complexes;
 
-  const SportsComplexList({required this.complexes});
+  const SportsComplexList({super.key, required this.complexes});
 
   @override
+  // ignore: library_private_types_in_public_api
   _SportsComplexListState createState() => _SportsComplexListState();
 }
 

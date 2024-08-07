@@ -7,10 +7,12 @@ import 'screens/register.dart';
 import 'models/sports_complex.dart'; // Import the RegisterPage widget
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -47,11 +49,17 @@ class HomePage extends StatelessWidget {
     // Add more SportsComplex instances here
   ];
 
+  HomePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Sports Booking App'),
+        title: const Text(
+          'SportsHub',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.blue,
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.person),
@@ -67,11 +75,11 @@ class HomePage extends StatelessWidget {
           padding: EdgeInsets.zero,
           children: <Widget>[
             const DrawerHeader(
-              child: Text('Menu',
-                  style: TextStyle(color: Colors.white, fontSize: 24)),
               decoration: BoxDecoration(
                 color: Colors.blue,
               ),
+              child: Text('Menu',
+                  style: TextStyle(color: Colors.white, fontSize: 24)),
             ),
             ListTile(
               title: const Text('Home'),

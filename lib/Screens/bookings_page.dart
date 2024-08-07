@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
 class BookingsPage extends StatelessWidget {
+  const BookingsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Bookings'),
+        title: const Text('My Bookings'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: const Padding(
+        padding: EdgeInsets.all(16.0),
         child: Center(
           child: Text(
             'No bookings yet!',

@@ -8,6 +8,7 @@ class PlayerBookingsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Bookings'),
+        backgroundColor: Colors.blue,
       ),
       body: const Padding(
         padding: EdgeInsets.all(16.0),

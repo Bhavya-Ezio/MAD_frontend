@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,15 +12,12 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   late final TextEditingController _email;
   late final TextEditingController _password;
-  late final TextEditingController _role;
-
-  List<String> role = ["Manager", "Player"];
+  bool _isPasswordVisible = false; // Track password visibility
 
   @override
   void initState() {
     _email = TextEditingController();
     _password = TextEditingController();
-    _role = TextEditingController();
     super.initState();
   }
 
@@ -26,8 +25,42 @@ class _LoginPageState extends State<LoginPage> {
   void dispose() {
     _email.dispose();
     _password.dispose();
-    _role.dispose();
     super.dispose();
+  }
+
+  Future<void> _login() async {
+    try {
+      final Map<String, dynamic> data = {
+        "email": _email.text,
+        "password": _password.text,
+      };
+      print(data);
+      final response = await http.post(
+        Uri.parse('https://mad-backend-x7p2.onrender.com/auth/login'),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(data),
+      );
+      print(response);
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        // print("Login successful: $responseData");
+        Navigator.of(context).pushReplacementNamed('/player/home'); // Example
+      } else {
+        final errorData = jsonDecode(response.body);
+        // print('${errorData}');
+        print('Error: ${errorData.message ?? 'Unknown error'}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: ${errorData['error'] ?? 'Unknown error'}')),
+        );
+      }
+    } catch (e) {
+      // print(e.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An error occurred. Please try again.')),
+      );
+    }
   }
 
   @override
@@ -46,8 +79,6 @@ class _LoginPageState extends State<LoginPage> {
           builder: (BuildContext context, BoxConstraints constraints) {
         return SingleChildScrollView(
           child: Container(
-            // constraints: const BoxConstraints(maxWidth: 600),
-            // padding: const EdgeInsets.all(30.0),
             decoration: const BoxDecoration(color: Colors.white),
             child: ConstrainedBox(
               constraints: BoxConstraints(
@@ -95,81 +126,35 @@ class _LoginPageState extends State<LoginPage> {
                       const SizedBox(height: 10.0),
                       TextField(
                         controller: _password,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: "Password",
-                          border: OutlineInputBorder(
+                          border: const OutlineInputBorder(
                             borderRadius: BorderRadius.all(Radius.circular(10)),
                           ),
                           fillColor: Colors.white,
                           filled: true,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _isPasswordVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _isPasswordVisible = !_isPasswordVisible;
+                              });
+                            },
+                          ),
                         ),
-                        obscureText: true,
+                        obscureText: !_isPasswordVisible,
                         enableSuggestions: false,
                         autocorrect: false,
                       ),
                       const SizedBox(height: 20.0),
                       SizedBox(
                         width: double.infinity,
-                        child: Container(
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                            border: Border.fromBorderSide(
-                              BorderSide(color: Colors.grey),
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(6, 1, 1, 1),
-                            child: DropdownButton<String>(
-                              value: _role.text == "" ? "Manager" : _role.text,
-                              icon: const Icon(Icons.keyboard_arrow_down),
-                              isExpanded: true,
-                              items: role.map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                print(_role.text);
-                                setState(() {
-                                  _role.text = newValue!;
-                                });
-                                print(_role.text);
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20.0),
-                      SizedBox(
-                        width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () async {
-                            try {
-                              Map<String, dynamic> data = {
-                                "username": _email.text,
-                                "password": _password.text
-                              };
-                              print(data);
-                              // final response = await http.post(
-                              //   Uri.parse(
-                              //       'https://f951-103-206-210-39.ngrok-free.app/user/register'),
-                              //   headers: <String, String>{
-                              //     'Content-Type': 'application/json; charset=UTF-8',
-                              //   },
-                              //   body: jsonEncode(data),
-                              // );
-                              // if (response.statusCode == 200) {
-                              //   print("response: ");
-                              //   print(jsonDecode(response.body));
-                              // } else {
-                              //   throw Exception('Failed to post data');
-                              // }
-                            } on Exception catch (e) {
-                              print(e.toString());
-                            }
-                          },
+                          onPressed: _login, // Call the _login method
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue,
                             textStyle: const TextStyle(fontSize: 16.0),
@@ -179,6 +164,21 @@ class _LoginPageState extends State<LoginPage> {
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10.0),
+                      Center(
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).pushNamed('/register'); // Navigate to the register page
+                          },
+                          child: const Text(
+                            "Don't have an account? Sign up",
+                            style: TextStyle(
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
                             ),
                           ),
                         ),

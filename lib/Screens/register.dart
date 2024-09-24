@@ -1,5 +1,3 @@
-// ignore_for_file: avoid_print
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -18,7 +16,8 @@ class _RegisterPageState extends State<RegisterPage> {
   late final TextEditingController _mobileNo;
   late final TextEditingController _role;
 
-  List<String> role = ["Manager", "Player"];
+  List<String> roles = ["Manager", "Player"];
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -40,181 +39,172 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
+  Future<void> _register() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final data = {
+        "name": _name.text,
+        "email": _email.text,
+        "password": _password.text,
+        "mobileNo": _mobileNo.text,
+        "role": _role.text.isEmpty ? "User" : _role.text,
+      };
+
+      final response = await http.post(
+        Uri.parse('https://your-backend-url.com/auth/signup'), // Replace with your API endpoint
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(data),
+      );
+
+      if (response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('User registered successfully!')),
+        );
+
+        // Redirect to role-based home page
+        if (responseData['userDetails']['role'] == 'Manager') {
+          Navigator.of(context).pushReplacementNamed('/manager/home');
+        } else if (responseData['userDetails']['role'] == 'Player') {
+          Navigator.of(context).pushReplacementNamed('/player/home');
+        }
+      } else {
+        final errorData = jsonDecode(response.body);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorData['message'] ?? 'Registration failed')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An error occurred. Please try again.')),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Center(
-            child: Text(
-          "Sports Hub",
-          style: TextStyle(color: Colors.white),
-        )),
-        backgroundColor: Colors.blue, // Add a background color for the app bar
+        title: const Text("Sports Hub", style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.blue,
       ),
-      body: LayoutBuilder(
-        builder: (BuildContext context, BoxConstraints constraints) {
-          return SingleChildScrollView(
-            child: Container(
-              decoration: const BoxDecoration(color: Colors.white),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight,
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            children: [
+              Center(
+                child: Image.asset(
+                  "assets/Images/logo.png",
+                  height: 150,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(30.0),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Center(
-                          child: Image.asset(
-                            "assets/Images/logo.png",
-                            height: 150,
-                          ),
-                        ),
-                        const SizedBox(height: 20.0),
-                        const Center(
-                          child: Text(
-                            "Register",
-                            style: TextStyle(
-                                fontSize: 24.0,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue),
-                          ),
-                        ),
-                        const SizedBox(height: 20.0),
-                        TextField(
-                          controller: _name,
-                          decoration: const InputDecoration(
-                              labelText: "Name",
-                              border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10))),
-                              fillColor: Colors.white,
-                              filled: true),
-                          keyboardType: TextInputType.name,
-                        ),
-                        const SizedBox(height: 10.0),
-                        TextField(
-                          controller: _email,
-                          decoration: const InputDecoration(
-                              labelText: "Email",
-                              border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10))),
-                              fillColor: Colors.white,
-                              filled: true),
-                          keyboardType: TextInputType.emailAddress,
-                          enableSuggestions: false,
-                          autocorrect: false,
-                        ),
-                        const SizedBox(height: 10.0),
-                        TextField(
-                          controller: _password,
-                          decoration: const InputDecoration(
-                              labelText: "Password",
-                              border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10))),
-                              fillColor: Colors.white,
-                              filled: true),
-                          obscureText: true,
-                          enableSuggestions: false,
-                          autocorrect: false,
-                        ),
-                        const SizedBox(height: 10.0),
-                        TextField(
-                          controller: _mobileNo,
-                          decoration: const InputDecoration(
-                              labelText: "Mobile Number",
-                              border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10))),
-                              fillColor: Colors.white,
-                              filled: true),
-                          keyboardType: TextInputType.phone,
-                          enableSuggestions: false,
-                          autocorrect: false,
-                        ),
-                        const SizedBox(height: 20.0),
-                        Container(
-                          decoration: const BoxDecoration(
-                              color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                    color: Colors.white, spreadRadius: 0.5)
-                              ],
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10))),
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(6, 1, 1, 1),
-                            child: DropdownButton<String>(
-                              value: _role.text == "" ? "Manager" : _role.text,
-                              icon: const Icon(Icons.keyboard_arrow_down),
-                              items: role.map((String value) {
-                                return DropdownMenuItem<String>(
-                                  value: value,
-                                  child: Text(value),
-                                );
-                              }).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _role.text = newValue!;
-                                });
-                              },
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20.0),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            onPressed: () async {
-                              try {
-                                Map<String, dynamic> data = {
-                                  "username": _email.text,
-                                  "password": _password.text
-                                };
-                                final response = await http.post(
-                                  Uri.parse(
-                                      'https://f951-103-206-210-39.ngrok-free.app/user/register'),
-                                  headers: <String, String>{
-                                    'Content-Type':
-                                        'application/json; charset=UTF-8',
-                                  },
-                                  body: jsonEncode(data),
-                                );
-                                if (response.statusCode == 200) {
-                                  print("response: ");
-                                  print(jsonDecode(response.body));
-                                } else {
-                                  throw Exception('Failed to post data');
-                                }
-                              } on Exception catch (e) {
-                                print(e.toString());
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.blue,
-                              textStyle: const TextStyle(fontSize: 16.0),
-                            ),
-                            child: const Text(
-                              "Register",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+              ),
+              const SizedBox(height: 20.0),
+              const Center(
+                child: Text(
+                  "Register",
+                  style: TextStyle(
+                    fontSize: 24.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blue,
                   ),
                 ),
               ),
-            ),
-          );
-        },
+              const SizedBox(height: 20.0),
+              TextField(
+                controller: _name,
+                decoration: const InputDecoration(
+                  labelText: "Name",
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10))),
+                  filled: true,
+                ),
+              ),
+              const SizedBox(height: 10.0),
+              TextField(
+                controller: _email,
+                decoration: const InputDecoration(
+                  labelText: "Email",
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10))),
+                  filled: true,
+                ),
+                keyboardType: TextInputType.emailAddress,
+              ),
+              const SizedBox(height: 10.0),
+              TextField(
+                controller: _password,
+                decoration: const InputDecoration(
+                  labelText: "Password",
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10))),
+                  filled: true,
+                ),
+                obscureText: true,
+              ),
+              const SizedBox(height: 10.0),
+              TextField(
+                controller: _mobileNo,
+                decoration: const InputDecoration(
+                  labelText: "Mobile Number",
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10))),
+                  filled: true,
+                ),
+                keyboardType: TextInputType.phone,
+              ),
+              const SizedBox(height: 20.0),
+              DropdownButtonFormField<String>(
+                value: _role.text.isEmpty ? "Manager" : _role.text,
+                decoration: const InputDecoration(
+                  labelText: "Role",
+                  border: OutlineInputBorder(
+                      borderRadius: BorderRadius.all(Radius.circular(10))),
+                  filled: true,
+                ),
+                items: roles.map((String role) {
+                  return DropdownMenuItem<String>(
+                    value: role,
+                    child: Text(role),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _role.text = newValue!;
+                  });
+                },
+              ),
+              const SizedBox(height: 20.0),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : _register,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    textStyle: const TextStyle(fontSize: 16.0),
+                  ),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        )
+                      : const Text("Register"),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

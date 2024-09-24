@@ -10,4 +10,13 @@ class SportsComplex {
     required this.pricePerHour,
     required this.location,
   });
+
+  factory SportsComplex.fromJson(Map<String, dynamic> json) {
+    return SportsComplex(
+      imageUrl: json['images'][0], // Adjust this based on your API response
+      name: json['name'],
+      pricePerHour: json['pricePerHour'].toDouble(),
+      location: json['city'],
+    );
+  }
 }

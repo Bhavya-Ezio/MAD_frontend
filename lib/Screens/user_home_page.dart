@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http; // Import the http package
 import '../models/sports_complex.dart'; // Import the SportsComplex class
 import '../screens/sports_complex_list.dart';
-import '../Screens/profile_page.dart'; // Import the SportsComplexList widget
-import '../Screens/bookings_page.dart'; // Import the SportsComplexList widget
+import '../Screens/profile_page.dart';
+import '../Screens/bookings_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -24,24 +26,53 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class HomePage extends StatelessWidget {
-  final List<SportsComplex> complexes = [
-    SportsComplex(
-      imageUrl: 'https://via.placeholder.com/150',
-      name: 'Complex A',
-      pricePerHour: 50.0,
-      location: 'Location A',
-    ),
-    SportsComplex(
-      imageUrl: 'https://via.placeholder.com/150',
-      name: 'Complex B',
-      pricePerHour: 60.0,
-      location: 'Location B',
-    ),
-    // Add more SportsComplex instances here
-  ];
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
 
-  HomePage({super.key});
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  List<SportsComplex> complexes = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchComplexData();
+  }
+
+  Future<void> fetchComplexData() async {
+    final url = Uri.parse('https://mad-backend-x7p2.onrender.com/complex/all');
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> complexesData = data['allComplex'];
+
+        setState(() {
+          complexes = complexesData.map((complex) {
+            return SportsComplex(
+              imageUrl: complex['images'][0], // Use the first image
+              name: complex['name'],
+              pricePerHour: complex['pricePerHour'].toDouble(),
+              location: complex['city'],
+            );
+          }).toList();
+          isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load complexes');
+      }
+    } catch (e) {
+      print('Error fetching data: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -52,12 +83,10 @@ class HomePage extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
-              // Navigate to profile page
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      const ProfilePage(), // Replace with your profile page widget
+                  builder: (context) => const PlayerProfilePage(),
                 ),
               );
             },
@@ -78,19 +107,16 @@ class HomePage extends StatelessWidget {
             ListTile(
               title: const Text('Home'),
               onTap: () {
-                // Navigate to home page
                 Navigator.pop(context);
               },
             ),
             ListTile(
               title: const Text('My Bookings'),
               onTap: () {
-                // Navigate to bookings page
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        const BookingsPage(), // Replace with your bookings page widget
+                    builder: (context) => const PlayerBookingsPage(),
                   ),
                 );
               },
@@ -104,7 +130,9 @@ class HomePage extends StatelessWidget {
           ],
         ),
       ),
-      body: SportsComplexList(complexes: complexes),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SportsComplexList(complexes: complexes),
     );
   }
 }

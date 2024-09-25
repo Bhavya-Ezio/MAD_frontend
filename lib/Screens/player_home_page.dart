@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:sporthub/models/sports_complex.dart';
 import 'dart:convert';
 import 'sports_complex_list.dart'; // Import SportsComplexList widget
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
 
 class PlayerHomePage extends StatefulWidget {
   const PlayerHomePage({super.key});
@@ -23,13 +24,26 @@ class _PlayerHomePageState extends State<PlayerHomePage> {
   }
 
   Future<void> fetchComplexes() async {
-    final response = await http
-        .get(Uri.parse('https://mad-backend-x7p2.onrender.com/complex/all'));
+    // Retrieve the token from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('jwtToken');
+
+    // Check if the token is null
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    final response = await http.get(
+      Uri.parse('https://mad-backend-x7p2.onrender.com/complex/all'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+        'Authorization': 'Bearer $token', // Add the Bearer token here
+      },
+    );
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> jsonData = json.decode(response.body);
-      final List<dynamic> complexesData =
-          jsonData['allComplex']; // Extract the 'allComplex' list
+      final List<dynamic> complexesData = jsonData['allComplex']; // Extract the 'allComplex' list
       setState(() {
         complexes = complexesData
             .map((complex) => SportsComplex.fromJson(complex))
@@ -81,21 +95,22 @@ class _PlayerHomePageState extends State<PlayerHomePage> {
                 Navigator.pushNamed(context, '/player/bookings');
               },
             ),
-            ListTile(
-              title: const Text('Login'),
-              onTap: () {
-                Navigator.pushNamed(context, '/login');
-              },
-            ),
-            ListTile(
-              title: const Text('Register'),
-              onTap: () {
-                Navigator.pushNamed(context, '/register');
-              },
-            ),
+            // ListTile(
+            //   title: const Text('Login'),
+            //   onTap: () {
+            //     Navigator.pushNamed(context, '/login');
+            //   },
+            // ),
+            // ListTile(
+            //   title: const Text('Register'),
+            //   onTap: () {
+            //     Navigator.pushNamed(context, '/register');
+            //   },
+            // ),
             ListTile(
               title: const Text('Logout'),
               onTap: () {
+                Navigator.pushNamed(context, '/login');
                 // Handle logout
               },
             ),

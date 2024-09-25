@@ -16,7 +16,7 @@ class _RegisterPageState extends State<RegisterPage> {
   late final TextEditingController _mobileNo;
   late final TextEditingController _role;
 
-  List<String> roles = ["Manager", "Player"];
+  List<String> roles = ["Manager", "User"];
   bool _isLoading = false;
 
   @override
@@ -52,15 +52,17 @@ class _RegisterPageState extends State<RegisterPage> {
         "mobileNo": _mobileNo.text,
         "role": _role.text.isEmpty ? "User" : _role.text,
       };
+      print(data);
 
       final response = await http.post(
-        Uri.parse('https://your-backend-url.com/auth/signup'), // Replace with your API endpoint
+        Uri.parse(
+            'https://mad-backend-x7p2.onrender.com/auth/signup'), // Replace with your API endpoint
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(data),
       );
-
+      print('Response body: ${response.body}');
       if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
 
@@ -77,7 +79,8 @@ class _RegisterPageState extends State<RegisterPage> {
       } else {
         final errorData = jsonDecode(response.body);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorData['message'] ?? 'Registration failed')),
+          SnackBar(
+              content: Text(errorData['message'] ?? 'Registration failed')),
         );
       }
     } catch (error) {

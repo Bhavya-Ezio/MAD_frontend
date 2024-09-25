@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+class ManagerHomePage extends StatelessWidget {
+  const ManagerHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,8 +38,64 @@ class DashboardPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manager Dashboard'),
-        backgroundColor: Colors.blue, // Change AppBar color to blue
+        title: const Text(
+          'Manager Dashboard',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.blue,
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: <Widget>[
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text(
+                'Menu',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home, color: Colors.blue),
+              title: const Text('Home'),
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to the Home Page
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.sports_soccer, color: Colors.blue),
+              title: const Text('Complexes'),
+              onTap: () {
+                Navigator.pushNamed(context, '/manager/complex');
+                // Navigate to the Complexes Page
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.book, color: Colors.blue),
+              title: const Text('Bookings'),
+              onTap: () {
+                Navigator.pop(context);
+                // Navigate to the Bookings Page
+              },
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout, color: Colors.red),
+              title: const Text('Logout'),
+              onTap: () {
+                // Handle logout
+                Navigator.pushNamed(context, '/login');
+              },
+            ),
+          ],
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -53,7 +109,7 @@ class DashboardPage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blueAccent, // Blue accent for title
+                  color: Colors.blueAccent,
                 ),
               ),
               const SizedBox(height: 16),
@@ -64,29 +120,33 @@ class DashboardPage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   return Card(
                     margin: const EdgeInsets.only(bottom: 16.0),
-                    color: Colors.blue[50], // Light blue background for cards
+                    color: Colors.blue[50],
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15.0),
                     ),
-                    elevation: 5, // Slight elevation for shadow
+                    elevation: 5,
                     child: ListTile(
+                      contentPadding: const EdgeInsets.all(16.0),
                       title: Text(
                         pendingRequests[index]['field']!,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue, // Blue for field name
+                          color: Colors.blue,
                         ),
                       ),
-                      subtitle: Text(
-                        '${pendingRequests[index]['date']} • ${pendingRequests[index]['time']} \nRequested by: ${pendingRequests[index]['user']}',
-                        style: const TextStyle(color: Colors.blueGrey),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          '${pendingRequests[index]['date']} • ${pendingRequests[index]['time']} \nRequested by: ${pendingRequests[index]['user']}',
+                          style: const TextStyle(color: Colors.blueGrey),
+                        ),
                       ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.check),
+                            icon: const Icon(Icons.check_circle_outline),
                             color: Colors.green[400],
                             onPressed: () {
                               // Accept request logic here
@@ -94,7 +154,7 @@ class DashboardPage extends StatelessWidget {
                             tooltip: 'Accept',
                           ),
                           IconButton(
-                            icon: const Icon(Icons.clear),
+                            icon: const Icon(Icons.cancel_outlined),
                             color: Colors.red[400],
                             onPressed: () {
                               // Reject request logic here
@@ -107,7 +167,6 @@ class DashboardPage extends StatelessWidget {
                   );
                 },
               ),
-
               const SizedBox(height: 32),
 
               // Upcoming Bookings Section
@@ -116,7 +175,7 @@ class DashboardPage extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blueAccent, // Blue accent for title
+                  color: Colors.blueAccent,
                 ),
               ),
               const SizedBox(height: 16),
@@ -127,23 +186,27 @@ class DashboardPage extends StatelessWidget {
                 itemBuilder: (context, index) {
                   return Card(
                     margin: const EdgeInsets.only(bottom: 16.0),
-                    color: Colors.blue[50], // Light blue background for cards
+                    color: Colors.blue[50],
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15.0),
                     ),
-                    elevation: 5, // Slight elevation for shadow
+                    elevation: 5,
                     child: ListTile(
+                      contentPadding: const EdgeInsets.all(16.0),
                       title: Text(
                         upcomingBookings[index]['field']!,
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue, // Blue for field name
+                          color: Colors.blue,
                         ),
                       ),
-                      subtitle: Text(
-                        '${upcomingBookings[index]['date']} • ${upcomingBookings[index]['time']} \nBooked by: ${upcomingBookings[index]['user']}',
-                        style: const TextStyle(color: Colors.blueGrey),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          '${upcomingBookings[index]['date']} • ${upcomingBookings[index]['time']} \nBooked by: ${upcomingBookings[index]['user']}',
+                          style: const TextStyle(color: Colors.blueGrey),
+                        ),
                       ),
                     ),
                   );

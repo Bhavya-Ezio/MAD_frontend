@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/sports_complex.dart';
 
 class AddFieldPage extends StatefulWidget {
@@ -14,6 +17,47 @@ class AddFieldPageState extends State<AddFieldPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _pricePerHourController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
+
+  Future<void> submitNewField() async {
+    try {
+      // Retrieve the token from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwtToken') ?? '';
+
+      // Create the new field data
+      final fieldData = {
+        "name": _nameController.text,
+        "imageUrl": _imageUrlController.text,
+        "pricePerHour": double.parse(_pricePerHourController.text),
+        "location": _locationController.text,
+      };
+
+      final response = await http.post(
+        Uri.parse('{{Api}}/complex/add'), // Replace with your actual endpoint
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token', // Add the token to the header
+        },
+        body: jsonEncode(fieldData),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        final newField = SportsComplex.fromJson(responseData['complex']);
+
+        // Pop this page and pass the new field back to the previous page
+        Navigator.pop(context, newField);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to add new field')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An error occurred while adding the field')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,18 +113,7 @@ class AddFieldPageState extends State<AddFieldPage> {
 
             // Submit Button
             ElevatedButton(
-              onPressed: () {
-                // Create a new SportsComplex instance with the data
-                final newField = SportsComplex(
-                  imageUrl: _imageUrlController.text,
-                  name: _nameController.text,
-                  pricePerHour: double.parse(_pricePerHourController.text),
-                  location: _locationController.text,
-                );
-
-                // Pop this page and pass the new field back to the previous page
-                Navigator.pop(context, newField);
-              },
+              onPressed: submitNewField,
               child: const Text('Add Field'),
             ),
           ],

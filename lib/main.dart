@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:sporthub/Screens/dashboard.dart';
+import 'package:sporthub/Screens/my_fields_page.dart';
 import 'screens/profile_page.dart'; // Import the ProfilePage widget
 import 'screens/bookings_page.dart'; // Import the MyBookingsPage widget
 import 'screens/login.dart'; // Import the LoginPage widget
@@ -24,9 +26,11 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginPage(),
         '/register': (context) => const RegisterPage(),
-        '/player/home': (context) => const PlayerHomePage(), // Updated route
+        '/player/home': (context) => const PlayerHomePage(),
         '/player/bookings': (context) => const PlayerBookingsPage(),
         '/player/profile': (context) => const PlayerProfilePage(),
+        '/manager/home': (context) => const ManagerHomePage(),
+        '/manager/complex': (context) => ManagerComplexPage(),
       },
     );
   }

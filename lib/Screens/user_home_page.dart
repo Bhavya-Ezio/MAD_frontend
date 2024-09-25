@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
-import 'package:http/http.dart' as http; // Import the http package
-import '../models/sports_complex.dart'; // Import the SportsComplex class
+import 'package:http/http.dart' as http;
+import '../models/sports_complex.dart';
 import '../screens/sports_complex_list.dart';
 import '../Screens/profile_page.dart';
 import '../Screens/bookings_page.dart';
@@ -45,8 +45,16 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> fetchComplexData() async {
     final url = Uri.parse('https://mad-backend-x7p2.onrender.com/complex/all');
+    final String token = "your_token_here"; // Replace with your actual token
+
     try {
-      final response = await http.get(url);
+      final response = await http.get(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token', // Include the token in the header
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -59,6 +67,8 @@ class _HomePageState extends State<HomePage> {
               name: complex['name'],
               pricePerHour: complex['pricePerHour'].toDouble(),
               location: complex['city'],
+              id: complex['_id'], // Ensure to include the id
+              sports:complex['sports']
             );
           }).toList();
           isLoading = false;

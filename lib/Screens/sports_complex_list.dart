@@ -74,7 +74,7 @@ class _SportsComplexListState extends State<SportsComplexList> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Price per hour: \$${complex.pricePerHour.toStringAsFixed(2)}',
+                            'Price per hour: ₹ ${complex.pricePerHour.toStringAsFixed(2)}',
                             style: TextStyle(
                                 fontSize: 16, color: Colors.grey[700]),
                           ),

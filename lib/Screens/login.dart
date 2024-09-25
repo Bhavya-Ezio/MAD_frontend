@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences package
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,9 +17,10 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void initState() {
+    super.initState();
     _email = TextEditingController();
     _password = TextEditingController();
-    super.initState();
+    _checkLoginStatus(); // Check login status on initialization
   }
 
   @override
@@ -28,13 +30,45 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
+  Future<void> _checkLoginStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? token = prefs.getString('jwtToken');
+
+    // If a token exists, navigate to the appropriate home page
+    if (token != null) {
+      // Optionally, you can decode the token to get user details
+      // For now, we assume the user role is stored with the token
+
+      // Check the role of the user, e.g., Manager or User
+      // (You may need to decode the token to get the role)
+      final response = await http.get(
+        Uri.parse('https://mad-backend-x7p2.onrender.com/auth/user'),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token', // Send token to get user details
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        String role = responseData['userDetails']['role'];
+
+        if (role == 'Manager') {
+          Navigator.of(context).pushReplacementNamed('/manager/home');
+        } else if (role == 'User') {
+          Navigator.of(context).pushReplacementNamed('/player/home');
+        }
+      }
+    }
+  }
+
   Future<void> _login() async {
     try {
       final Map<String, dynamic> data = {
         "email": _email.text,
         "password": _password.text,
       };
-      print(data);
+
       final response = await http.post(
         Uri.parse('https://mad-backend-x7p2.onrender.com/auth/login'),
         headers: <String, String>{
@@ -42,21 +76,29 @@ class _LoginPageState extends State<LoginPage> {
         },
         body: jsonEncode(data),
       );
-      print(response);
+
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        // print("Login successful: $responseData");
-        Navigator.of(context).pushReplacementNamed('/player/home'); // Example
+
+        // Save the token in SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('jwtToken', responseData['token']);
+
+        // Check role and navigate accordingly
+        if (responseData['userDetails']['role'] == 'Manager') {
+          Navigator.of(context).pushReplacementNamed('/manager/home');
+        } else if (responseData['userDetails']['role'] == 'User') {
+          Navigator.of(context).pushReplacementNamed('/player/home');
+        }
       } else {
         final errorData = jsonDecode(response.body);
-        // print('${errorData}');
-        print('Error: ${errorData.message ?? 'Unknown error'}');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Login failed: ${errorData['error'] ?? 'Unknown error'}')),
+          SnackBar(
+              content:
+                  Text('Login failed: ${errorData['message'] ?? 'Unknown error'}')),
         );
       }
     } catch (e) {
-      // print(e.toString());
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('An error occurred. Please try again.')),
       );

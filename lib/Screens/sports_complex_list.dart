@@ -57,7 +57,7 @@ class _SportsComplexListState extends State<SportsComplexList> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Image.network(
-                      complex.imageUrl,
+                      complex.images[0],
                       height: 150,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -80,7 +80,7 @@ class _SportsComplexListState extends State<SportsComplexList> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Location: ${complex.location}',
+                            'Location: ${complex.city}',
                             style: TextStyle(
                                 fontSize: 16, color: Colors.grey[700]),
                           ),

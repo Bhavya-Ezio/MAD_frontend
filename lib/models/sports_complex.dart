@@ -1,40 +1,88 @@
 class SportsComplex {
-  final String imageUrl;
+  final String id; // _id in JSON
   final String name;
-  final double pricePerHour;
-  final String location;
-  final String id;
-  final List<Sport> sports; // Adding a list of sports
+  final String address;
+  final String city;
+  final String phone;
+  final String email;
+  final String openingTime;
+  final String closingTime;
+  final int pricePerHour;
+  final String description;
+  final String? managerId; // Nullable because it could be an ID or a populated object
+  final Manager? manager; // Nullable to handle when it's not populated
+  final List<Sport> sports;
+  final List<String> images;
 
   SportsComplex({
-    required this.imageUrl,
-    required this.name,
-    required this.pricePerHour,
-    required this.location,
-    required this.sports, // Include sports in the constructor
     required this.id,
+    required this.name,
+    required this.address,
+    required this.city,
+    required this.phone,
+    required this.email,
+    required this.openingTime,
+    required this.closingTime,
+    required this.pricePerHour,
+    required this.description,
+    this.managerId,
+    this.manager,
+    required this.sports,
+    required this.images,
   });
 
   factory SportsComplex.fromJson(Map<String, dynamic> json) {
+    final managerData = json['manager'];
+
     return SportsComplex(
-      imageUrl: json['images'][0],
+      id: json['_id'], 
       name: json['name'],
-      pricePerHour: json['pricePerHour'].toDouble(),
-      location: json['city'],
-      id: json['_id'],
+      address: json['address'],
+      city: json['city'],
+      phone: json['phone'],
+      email: json['email'],
+      openingTime: json['openingTime'],
+      closingTime: json['closingTime'],
+      pricePerHour: json['pricePerHour'],
+      description: json['description'],
+      managerId: managerData is String ? managerData : null, // Handle manager as ID
+      manager: managerData is Map<String, dynamic> ? Manager.fromJson(managerData) : null, // Handle populated manager
       sports: (json['sports'] as List<dynamic>)
-          .map((sportJson) => Sport.fromJson(sportJson))
-          .toList(), // Map sports list
+          .map((sport) => Sport.fromJson(sport))
+          .toList(),
+      images: List<String>.from(json['images']),
     );
   }
 }
 
-// Create a separate Sport class to handle sport details
+class Manager {
+  final String id; // _id in JSON
+  final String? name; // Nullable in case only id is present
+  final String? email;
+
+  Manager({
+    required this.id,
+    this.name,
+    this.email,
+  });
+
+  factory Manager.fromJson(Map<String, dynamic> json) {
+    return Manager(
+      id: json['_id'],
+      name: json['name'], // Could be null if not populated
+      email: json['email'], // Could be null if not populated
+    );
+  }
+}
+
 class Sport {
-  final String id;
+  final String id; // _id in JSON
   final String name;
 
-  Sport({required this.id, required this.name});
+  Sport({
+    required this.id,
+    required this.name,
+  });
 
   factory Sport.fromJson(Map<String, dynamic> json) {
     return Sport(

@@ -4,7 +4,6 @@ import 'dart:convert';
 import '../models/sports_complex.dart'; // Import the SportsComplex class
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class EnquiryPage extends StatefulWidget {
   final SportsComplex complex;
 
@@ -34,95 +33,93 @@ class EnquiryPageState extends State<EnquiryPage> {
   }
 
   Future<void> fetchComplexDetails() async {
-  try {
-    // Retrieve the token from SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwtToken') ?? ''; // Replace 'jwtToken' with your actual key
+    try {
+      // Retrieve the token from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwtToken') ?? '';
 
-    final response = await http.get(
-      Uri.parse('{{Api}}/complex/detail/${widget.complex.id}'),
-      headers: {
-        'Authorization': 'Bearer $token', // Add token to the request header
-        'Content-Type': 'application/json; charset=UTF-8',
-      },
-    );
+      final response = await http.get(
+        Uri.parse('https://mad-backend-x7p2.onrender.com/complex/detail/${widget.complex.id}'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonData = json.decode(response.body);
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonData = json.decode(response.body);
+        setState(() {
+          _complexDetails = SportsComplex.fromJson(jsonData['allComplex'][0]); // Use the correct path in the response
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load complex details');
+      }
+    } catch (error) {
       setState(() {
-        _complexDetails = SportsComplex.fromJson(jsonData['complex']);
         _isLoading = false;
       });
-    } else {
-      throw Exception('Failed to load complex details');
-    }
-  } catch (error) {
-    setState(() {
-      _isLoading = false;
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Error loading complex details')),
-    );
-  }
-}
-
-Future<void> submitBooking() async {
-  if (!_formKey.currentState!.validate()) return;
-
-  final startTime = DateTime(
-    _selectedDate.year,
-    _selectedDate.month,
-    _selectedDate.day,
-    _selectedTime.hour,
-    _selectedTime.minute,
-  ).toUtc().toIso8601String();
-
-  final endTime = DateTime(
-    _selectedDate.year,
-    _selectedDate.month,
-    _selectedDate.day,
-    _selectedTime.hour + 1,
-    _selectedTime.minute,
-  ).toUtc().toIso8601String();
-
-  final bookingData = {
-    "sportComplexId": widget.complex.id,
-    "sportId": _complexDetails?.sports[0].id ?? '',
-    "startTime": startTime,
-    "endTime": endTime,
-    "bookingType": "Regular",
-  };
-
-  try {
-    // Retrieve the token from SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('jwtToken') ?? '';
-
-    final response = await http.post(
-      Uri.parse('{{Api}}/booking/add'),
-      headers: {
-        'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token', // Add token to the request header
-      },
-      body: jsonEncode(bookingData),
-    );
-
-    if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Booking submitted successfully!')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to submit booking')),
+        const SnackBar(content: Text('Error loading complex details')),
       );
     }
-  } catch (error) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('An error occurred while submitting the booking')),
-    );
   }
-}
 
+  Future<void> submitBooking() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final startTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    ).toUtc().toIso8601String();
+
+    final endTime = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour + 1,
+      _selectedTime.minute,
+    ).toUtc().toIso8601String();
+
+    final bookingData = {
+      "sportComplexId": widget.complex.id,
+      "sportId": _complexDetails?.sports[0].id ?? '', // Updated to access the correct field
+      "startTime": startTime,
+      "endTime": endTime,
+      "bookingType": "Regular",
+    };
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('jwtToken') ?? '';
+
+      final response = await http.post(
+        Uri.parse('https://mad-backend-x7p2.onrender.com/booking/add'),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(bookingData),
+      );
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Booking submitted successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to submit booking')),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('An error occurred while submitting the booking')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +150,7 @@ Future<void> submitBooking() async {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Location: ${widget.complex.location}',
+                    'Location: ${widget.complex.address}', // Updated to reflect the new model
                     style: TextStyle(fontSize: 18, color: Colors.grey[700]),
                   ),
                   const SizedBox(height: 16),
@@ -162,7 +159,7 @@ Future<void> submitBooking() async {
                     : ClipRRect(
                         borderRadius: BorderRadius.circular(8.0),
                         child: Image.network(
-                          _complexDetails!.imageUrl,
+                          _complexDetails!.images.isNotEmpty ? _complexDetails!.images[0] : '', // Updated to use the images array
                           height: 200,
                           width: double.infinity,
                           fit: BoxFit.cover,

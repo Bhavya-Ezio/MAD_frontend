@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart'; // Import shared_preferences package
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -20,7 +20,6 @@ class _LoginPageState extends State<LoginPage> {
     super.initState();
     _email = TextEditingController();
     _password = TextEditingController();
-    _checkLoginStatus(); // Check login status on initialization
   }
 
   @override
@@ -30,57 +29,27 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  Future<void> _checkLoginStatus() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? token = prefs.getString('jwtToken');
 
-    // If a token exists, navigate to the appropriate home page
-    if (token != null) {
-      // Optionally, you can decode the token to get user details
-      // For now, we assume the user role is stored with the token
+Future<void> _login() async {
+  try {
+    final Map<String, dynamic> data = {
+      "email": _email.text,
+      "password": _password.text,
+    };
 
-      // Check the role of the user, e.g., Manager or User
-      // (You may need to decode the token to get the role)
-      final response = await http.get(
-        Uri.parse('https://mad-backend-x7p2.onrender.com/auth/user'),
-        headers: {
-          'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token', // Send token to get user details
-        },
-      );
+    final response = await http.post(
+      Uri.parse('https://mad-backend-x7p2.onrender.com/auth/login'),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(data),
+    );
 
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        String role = responseData['userDetails']['role'];
+    print("Login response: ${response.body}"); // Print the response for debugging
 
-        if (role == 'Manager') {
-          Navigator.of(context).pushReplacementNamed('/manager/home');
-        } else if (role == 'User') {
-          Navigator.of(context).pushReplacementNamed('/player/home');
-        }
-      }
-    }
-  }
-
-  Future<void> _login() async {
-    try {
-      final Map<String, dynamic> data = {
-        "email": _email.text,
-        "password": _password.text,
-      };
-
-      final response = await http.post(
-        Uri.parse('https://mad-backend-x7p2.onrender.com/auth/login'),
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(data),
-      );
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-
-        // Save the token in SharedPreferences
+    if (response.statusCode == 200) {
+      final responseData = jsonDecode(response.body);
+      if (responseData['userDetails'] != null) { // Check if userDetails is not null
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('jwtToken', responseData['token']);
 
@@ -91,19 +60,24 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.of(context).pushReplacementNamed('/player/home');
         }
       } else {
-        final errorData = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text('Login failed: ${errorData['message'] ?? 'Unknown error'}')),
-        );
+        print("userDetails is null");
       }
-    } catch (e) {
+    } else {
+      final errorData = jsonDecode(response.body);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An error occurred. Please try again.')),
+        SnackBar(
+          content: Text('Login failed: ${errorData['message'] ?? 'Unknown error'}'),
+        ),
       );
+      print("Login error: ${errorData['message']}");
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('An error occurred. Please try again.')),
+    );
+    print("Error: $e");
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -118,121 +92,122 @@ class _LoginPageState extends State<LoginPage> {
         backgroundColor: Colors.blue,
       ),
       body: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-        return SingleChildScrollView(
-          child: Container(
-            decoration: const BoxDecoration(color: Colors.white),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(30.0),
-                child: IntrinsicHeight(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Image.asset(
-                          "assets/Images/logo.png",
-                          height: 150,
-                        ),
-                      ),
-                      const SizedBox(height: 20.0),
-                      const Center(
-                        child: Text(
-                          "Login",
-                          style: TextStyle(
-                            fontSize: 24.0,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue,
+        builder: (BuildContext context, BoxConstraints constraints) {
+          return SingleChildScrollView(
+            child: Container(
+              decoration: const BoxDecoration(color: Colors.white),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(30.0),
+                  child: IntrinsicHeight(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Image.asset(
+                            "assets/Images/logo.png",
+                            height: 150,
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 20.0),
-                      TextField(
-                        controller: _email,
-                        decoration: const InputDecoration(
-                          labelText: "Email",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                          ),
-                          fillColor: Colors.white,
-                          filled: true,
-                        ),
-                        keyboardType: TextInputType.emailAddress,
-                        enableSuggestions: false,
-                        autocorrect: false,
-                      ),
-                      const SizedBox(height: 10.0),
-                      TextField(
-                        controller: _password,
-                        decoration: InputDecoration(
-                          labelText: "Password",
-                          border: const OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                          ),
-                          fillColor: Colors.white,
-                          filled: true,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _isPasswordVisible
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _isPasswordVisible = !_isPasswordVisible;
-                              });
-                            },
-                          ),
-                        ),
-                        obscureText: !_isPasswordVisible,
-                        enableSuggestions: false,
-                        autocorrect: false,
-                      ),
-                      const SizedBox(height: 20.0),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _login, // Call the _login method
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            textStyle: const TextStyle(fontSize: 16.0),
-                          ),
-                          child: const Text(
+                        const SizedBox(height: 20.0),
+                        const Center(
+                          child: Text(
                             "Login",
                             style: TextStyle(
-                              color: Colors.white,
+                              fontSize: 24.0,
                               fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      Center(
-                        child: GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).pushNamed('/register'); // Navigate to the register page
-                          },
-                          child: const Text(
-                            "Don't have an account? Sign up",
-                            style: TextStyle(
                               color: Colors.blue,
-                              decoration: TextDecoration.underline,
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 20.0),
+                        TextField(
+                          controller: _email,
+                          decoration: const InputDecoration(
+                            labelText: "Email",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                            ),
+                            fillColor: Colors.white,
+                            filled: true,
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          enableSuggestions: false,
+                          autocorrect: false,
+                        ),
+                        const SizedBox(height: 10.0),
+                        TextField(
+                          controller: _password,
+                          decoration: InputDecoration(
+                            labelText: "Password",
+                            border: const OutlineInputBorder(
+                              borderRadius: BorderRadius.all(Radius.circular(10)),
+                            ),
+                            fillColor: Colors.white,
+                            filled: true,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  _isPasswordVisible = !_isPasswordVisible;
+                                });
+                              },
+                            ),
+                          ),
+                          obscureText: !_isPasswordVisible,
+                          enableSuggestions: false,
+                          autocorrect: false,
+                        ),
+                        const SizedBox(height: 20.0),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _login,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              textStyle: const TextStyle(fontSize: 16.0),
+                            ),
+                            child: const Text(
+                              "Login",
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        Center(
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.of(context).pushNamed('/register');
+                            },
+                            child: const Text(
+                              "Don't have an account? Sign up",
+                              style: TextStyle(
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        );
-      }),
+          );
+        },
+      ),
     );
   }
 }

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import '../models/sports_complex.dart'; // Import the SportsComplex class
-import 'enquiry_page.dart'; // Import the EnquiryPage widget
+import 'enquiry_page.dart'; // Import the EnquiryPage
 
 class SportsComplexList extends StatefulWidget {
   final List<SportsComplex> complexes;
+  final Function(String complexId) onComplexTap; // Callback function for complex selection
 
-  const SportsComplexList({super.key, required this.complexes});
+  const SportsComplexList({
+    super.key, 
+    required this.complexes, 
+    required this.onComplexTap, // Ensure this is passed as a parameter
+  });
 
   @override
-  // ignore: library_private_types_in_public_api
   _SportsComplexListState createState() => _SportsComplexListState();
 }
 
@@ -57,7 +61,7 @@ class _SportsComplexListState extends State<SportsComplexList> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
                     Image.network(
-                      complex.images[0],
+                      complex.images.isNotEmpty ? complex.images[0] : '', // Ensure image exists
                       height: 150,
                       width: double.infinity,
                       fit: BoxFit.cover,
@@ -87,11 +91,14 @@ class _SportsComplexListState extends State<SportsComplexList> {
                           const SizedBox(height: 16),
                           ElevatedButton(
                             onPressed: () {
+                              // Call the onComplexTap callback with the complex _id
+                              widget.onComplexTap(complex.id);
+                              
+                              // Navigate to the EnquiryPage with complex.id
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      EnquiryPage(complex: complex),
+                                  builder: (context) => EnquiryPage(complexId: complex.id),
                                 ),
                               );
                             },

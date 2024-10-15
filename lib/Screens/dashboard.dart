@@ -82,6 +82,7 @@ class ManagerHomePage extends StatelessWidget {
               title: const Text('Bookings'),
               onTap: () {
                 Navigator.pop(context);
+                Navigator.pushNamed(context, '/manager/booking');
                 // Navigate to the Bookings Page
               },
             ),

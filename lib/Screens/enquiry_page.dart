@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import '../models/sports_complex.dart'; // Import the SportsComplex class
 import 'package:shared_preferences/shared_preferences.dart';
+import '../models/sports_complex.dart';
 
 class EnquiryPage extends StatefulWidget {
-  final SportsComplex complex;
+  final String complexId;
 
-  const EnquiryPage({super.key, required this.complex});
+  const EnquiryPage({super.key, required this.complexId});
 
   @override
   EnquiryPageState createState() => EnquiryPageState();
@@ -15,17 +15,13 @@ class EnquiryPage extends StatefulWidget {
 
 class EnquiryPageState extends State<EnquiryPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _dateController = TextEditingController();
-  final TextEditingController _timeController = TextEditingController();
-  final TextEditingController _sportController = TextEditingController();
-
-  DateTime _selectedDate = DateTime.now();
-  TimeOfDay _selectedTime = TimeOfDay.now();
+  final TextEditingController _startTimeController = TextEditingController();
+  final TextEditingController _endTimeController = TextEditingController();
+  String? _selectedSport;
   SportsComplex? _complexDetails;
   bool _isLoading = true;
-  
+  bool _isSubmitting = false;
+
   @override
   void initState() {
     super.initState();
@@ -34,12 +30,12 @@ class EnquiryPageState extends State<EnquiryPage> {
 
   Future<void> fetchComplexDetails() async {
     try {
-      // Retrieve the token from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('jwtToken') ?? '';
 
       final response = await http.get(
-        Uri.parse('https://mad-backend-x7p2.onrender.com/complex/detail/${widget.complex.id}'),
+        Uri.parse(
+            'https://mad-backend-x7p2.onrender.com/complex/detail/${widget.complexId}'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json; charset=UTF-8',
@@ -47,9 +43,12 @@ class EnquiryPageState extends State<EnquiryPage> {
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> jsonData = json.decode(response.body);
+        final jsonData = json.decode(response.body);
         setState(() {
-          _complexDetails = SportsComplex.fromJson(jsonData['allComplex'][0]); // Use the correct path in the response
+          _complexDetails = SportsComplex.fromJson(jsonData['complexDetails']);
+          _selectedSport = _complexDetails?.sports.isNotEmpty == true
+              ? _complexDetails!.sports[0].id
+              : null; // Ensure there's a sport to select
           _isLoading = false;
         });
       } else {
@@ -68,27 +67,15 @@ class EnquiryPageState extends State<EnquiryPage> {
   Future<void> submitBooking() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final startTime = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      _selectedTime.hour,
-      _selectedTime.minute,
-    ).toUtc().toIso8601String();
-
-    final endTime = DateTime(
-      _selectedDate.year,
-      _selectedDate.month,
-      _selectedDate.day,
-      _selectedTime.hour + 1,
-      _selectedTime.minute,
-    ).toUtc().toIso8601String();
+    setState(() {
+      _isSubmitting = true;
+    });
 
     final bookingData = {
-      "sportComplexId": widget.complex.id,
-      "sportId": _complexDetails?.sports[0].id ?? '', // Updated to access the correct field
-      "startTime": startTime,
-      "endTime": endTime,
+      "sportComplexId": widget.complexId,
+      "sportId": _selectedSport,
+      "startTime": _startTimeController.text,
+      "endTime": _endTimeController.text,
       "bookingType": "Regular",
     };
 
@@ -116,8 +103,12 @@ class EnquiryPageState extends State<EnquiryPage> {
       }
     } catch (error) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An error occurred while submitting the booking')),
+        const SnackBar(content: Text('Error submitting booking')),
       );
+    } finally {
+      setState(() {
+        _isSubmitting = false;
+      });
     }
   }
 
@@ -125,170 +116,204 @@ class EnquiryPageState extends State<EnquiryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Enquire About ${widget.complex.name}'),
-        backgroundColor: Colors.blue[700],
+        title: const Text('Inquiry Page'),
+        backgroundColor: const Color(0xFF0F4C75),
       ),
-      body: _isLoading 
-        ? const Center(child: CircularProgressIndicator())
-        : Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'Sports Complex: ${widget.complex.name}',
-                    style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Price per hour: \$${widget.complex.pricePerHour.toStringAsFixed(2)}',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Location: ${widget.complex.address}', // Updated to reflect the new model
-                    style: TextStyle(fontSize: 18, color: Colors.grey[700]),
-                  ),
-                  const SizedBox(height: 16),
-                  _complexDetails == null 
-                    ? const CircularProgressIndicator()
-                    : ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: Image.network(
-                          _complexDetails!.images.isNotEmpty ? _complexDetails!.images[0] : '', // Updated to use the images array
-                          height: 200,
-                          width: double.infinity,
-                          fit: BoxFit.cover,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Display Complex Image
+                      if (_complexDetails?.images.isNotEmpty == true)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(15.0),
+                          child: Image.network(
+                            _complexDetails!.images[0],
+                            height: 200,
+                            width: double.infinity,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      const SizedBox(height: 10),
+
+                      // Display Complex Details
+                      Text(
+                        'Complex: ${_complexDetails?.name ?? 'Loading...'}',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                            ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        'Address: ${_complexDetails?.address ?? 'Loading...'}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        'City: ${_complexDetails?.city ?? 'Loading...'}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        'Phone: ${_complexDetails?.phone ?? 'Loading...'}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        'Email: ${_complexDetails?.email ?? 'Loading...'}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        'Opening Hours: ${_complexDetails?.openingTime} - ${_complexDetails?.closingTime}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      Text(
+                        'Price per Hour: ₹${_complexDetails?.pricePerHour ?? 0}',
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Display Available Sports
+                      const Text(
+                        'Available Sports:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
                         ),
                       ),
-                  const SizedBox(height: 16),
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: <Widget>[
-                        _buildTextField(_nameController, 'Your Name'),
-                        const SizedBox(height: 12),
-                        _buildTextField(_phoneController, 'Your Phone Number'),
-                        const SizedBox(height: 12),
-                        _buildTextField(_sportController, 'Sport Type'),
-                        const SizedBox(height: 12),
-                        _buildDateField(),
-                        const SizedBox(height: 12),
-                        _buildTimeField(),
-                        const SizedBox(height: 24),
-                        ElevatedButton(
-                          onPressed: submitBooking, 
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8.0),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 14.0),
-                          ),
-                          child: const Text('Submit Booking',
-                              style: TextStyle(fontSize: 16)),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 8.0,
+                        runSpacing: 8.0,
+                        children: _complexDetails?.sports
+                                .map((sport) => Chip(
+                                      label: Text(sport.name),
+                                      backgroundColor: const Color(0xFF3282B8),
+                                      labelStyle: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ))
+                                .toList() ??
+                            [],
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Dropdown for Selecting Sport
+                      DropdownButtonFormField<String>(
+                        value: _selectedSport,
+                        items: _complexDetails?.sports
+                                .map((sport) => DropdownMenuItem(
+                                      value: sport.id,
+                                      child: Text(sport.name),
+                                    ))
+                                .toList() ??
+                            [],
+                        onChanged: (newValue) {
+                          setState(() {
+                            _selectedSport = newValue;
+                          });
+                        },
+                        decoration: InputDecoration(
+                          labelText: 'Select Sport',
+                          border: OutlineInputBorder(),
+                          filled: true,
+                          fillColor:
+                              const Color(0xFFBBE1FA), // Light blue background
                         ),
-                      ],
-                    ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please select a sport';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Start Time Input
+                      _buildTimeInputField(
+                        controller: _startTimeController,
+                        label: 'Start Time',
+                        context: context,
+                      ),
+                      const SizedBox(height: 10),
+
+                      // End Time Input
+                      _buildTimeInputField(
+                        controller: _endTimeController,
+                        label: 'End Time',
+                        context: context,
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Submit Button
+                      _isSubmitting
+                          ? const Center(child: CircularProgressIndicator())
+                          : Container(
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(10),
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xFF0F4C75),
+                                    Color(0xFF3282B8),
+                                  ],
+                                ),
+                              ),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
+                                ),
+                                onPressed: submitBooking,
+                                child: const Text(
+                                  'Submit Booking',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                              ),
+                            ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
-          ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label) {
+  Widget _buildTimeInputField({
+    required TextEditingController controller,
+    required String label,
+    required BuildContext context,
+  }) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
         labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+        border: const OutlineInputBorder(),
+        filled: true,
+        fillColor: const Color(0xFFBBE1FA), // Light blue background
       ),
-      keyboardType: label == 'Your Phone Number'
-          ? TextInputType.phone
-          : TextInputType.text,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter $label';
+      onTap: () async {
+        FocusScope.of(context).requestFocus(FocusNode());
+        TimeOfDay? picked = await showTimePicker(
+          context: context,
+          initialTime: TimeOfDay.now(),
+        );
+        if (picked != null) {
+          setState(() {
+            controller.text = picked.format(context);
+          });
         }
-        return null;
       },
-    );
-  }
-
-  Widget _buildDateField() {
-    return TextFormField(
-      controller: _dateController,
-      decoration: InputDecoration(
-        labelText: 'Date (YYYY-MM-DD)',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.calendar_today),
-          onPressed: () async {
-            DateTime? pickedDate = await showDatePicker(
-              context: context,
-              initialDate: _selectedDate,
-              firstDate: DateTime.now(),
-              lastDate: DateTime(2100),
-            );
-            if (pickedDate != null) {
-              setState(() {
-                _selectedDate = pickedDate;
-                _dateController.text = "${pickedDate.toLocal()}".split(' ')[0];
-              });
-            }
-          },
-        ),
-      ),
-      readOnly: true,
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'Please enter the booking date';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildTimeField() {
-    return TextFormField(
-      controller: _timeController,
-      decoration: InputDecoration(
-        labelText: 'Time (HH:MM)',
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        suffixIcon: IconButton(
-          icon: const Icon(Icons.access_time),
-          onPressed: () async {
-            TimeOfDay? pickedTime = await showTimePicker(
-              context: context,
-              initialTime: _selectedTime,
-            );
-            if (pickedTime != null) {
-              setState(() {
-                _selectedTime = pickedTime;
-                _timeController.text = pickedTime.format(context);
-              });
-            }
-          },
-        ),
-      ),
-      readOnly: true,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Please enter the booking time';
+          return 'Please select a $label';
         }
         return null;
       },

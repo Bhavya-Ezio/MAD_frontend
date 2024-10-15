@@ -31,12 +31,19 @@ class _LoginPageState extends State<LoginPage> {
 
 
 Future<void> _login() async {
-  try {
-    final Map<String, dynamic> data = {
-      "email": _email.text,
-      "password": _password.text,
-    };
+  if (_email.text.isEmpty || _password.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please fill in all fields.')),
+    );
+    return; // Exit if fields are empty
+  }
 
+  final Map<String, dynamic> data = {
+    "email": _email.text,
+    "password": _password.text,
+  };
+
+  try {
     final response = await http.post(
       Uri.parse('https://mad-backend-x7p2.onrender.com/auth/login'),
       headers: <String, String>{
@@ -54,6 +61,7 @@ Future<void> _login() async {
         await prefs.setString('jwtToken', responseData['token']);
 
         // Check role and navigate accordingly
+        if (!mounted) return; // Check if the widget is still mounted
         if (responseData['userDetails']['role'] == 'Manager') {
           Navigator.of(context).pushReplacementNamed('/manager/home');
         } else if (responseData['userDetails']['role'] == 'User') {
@@ -64,6 +72,7 @@ Future<void> _login() async {
       }
     } else {
       final errorData = jsonDecode(response.body);
+      if (!mounted) return; // Check if the widget is still mounted
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Login failed: ${errorData['message'] ?? 'Unknown error'}'),
@@ -72,12 +81,14 @@ Future<void> _login() async {
       print("Login error: ${errorData['message']}");
     }
   } catch (e) {
+    if (!mounted) return; // Check if the widget is still mounted
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('An error occurred. Please try again.')),
     );
     print("Error: $e");
   }
 }
+
 
   @override
   Widget build(BuildContext context) {

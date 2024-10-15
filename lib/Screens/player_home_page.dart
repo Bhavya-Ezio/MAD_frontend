@@ -1,5 +1,3 @@
-// player_home_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:sporthub/models/sports_complex.dart';
@@ -24,11 +22,9 @@ class _PlayerHomePageState extends State<PlayerHomePage> {
   }
 
   Future<void> fetchComplexes() async {
-    // Retrieve the token from SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('jwtToken');
 
-    // Check if the token is null
     if (token == null) {
       throw Exception('Token not found');
     }
@@ -37,13 +33,13 @@ class _PlayerHomePageState extends State<PlayerHomePage> {
       Uri.parse('https://mad-backend-x7p2.onrender.com/complex/all'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
-        'Authorization': 'Bearer $token', // Add the Bearer token here
+        'Authorization': 'Bearer $token',
       },
     );
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> jsonData = json.decode(response.body);
-      final List<dynamic> complexesData = jsonData['allComplex']; // Extract the 'allComplex' list
+      final List<dynamic> complexesData = jsonData['allComplex'];
       setState(() {
         complexes = complexesData
             .map((complex) => SportsComplex.fromJson(complex))
@@ -51,6 +47,23 @@ class _PlayerHomePageState extends State<PlayerHomePage> {
       });
     } else {
       throw Exception('Failed to load complexes');
+    }
+  }
+
+  Future<void> _logout() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+
+      // Clear the token from SharedPreferences
+      await prefs.remove('jwtToken');
+      Navigator.of(context).pushReplacementNamed('/login');
+
+      // Navigate back to the login screen without back button
+    } catch (e) {
+      print('Logout error: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Logout failed. Please try again.')),
+      );
     }
   }
 
@@ -95,23 +108,11 @@ class _PlayerHomePageState extends State<PlayerHomePage> {
                 Navigator.pushNamed(context, '/player/bookings');
               },
             ),
-            // ListTile(
-            //   title: const Text('Login'),
-            //   onTap: () {
-            //     Navigator.pushNamed(context, '/login');
-            //   },
-            // ),
-            // ListTile(
-            //   title: const Text('Register'),
-            //   onTap: () {
-            //     Navigator.pushNamed(context, '/register');
-            //   },
-            // ),
             ListTile(
               title: const Text('Logout'),
               onTap: () {
-                Navigator.pushNamed(context, '/login');
-                // Handle logout
+                Navigator.pop(context); // Close the drawer
+                _logout(); // Call the logout function on tap
               },
             ),
           ],
@@ -119,7 +120,16 @@ class _PlayerHomePageState extends State<PlayerHomePage> {
       ),
       body: complexes.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : SportsComplexList(complexes: complexes),
+          : SportsComplexList(
+              complexes: complexes,
+              onComplexTap: (String complexId) {
+                Navigator.pushNamed(
+                  context,
+                  '/complex/detail',
+                  arguments: complexId,
+                );
+              },
+            ),
     );
   }
 }
